@@ -2,19 +2,18 @@
 # get_current_scn "sys" "oracle" "fcclive"
 ########################
 function get_current_scn() {
-   local user="$1"
-   local password="$2"
-   local service="$3"
-   result=$(sqlplus -S /nolog <<EOF >> /home/oracle/shell_scripts/v1/pre_eod.log
-   connect $user/$password@$service as sysdba;
-   set heading off;
-   set pagesize 0;
-   set feedback off;
-   select to_char(current_scn) from v\$database;
-   exit;
+        local user="$1"
+        local password="$2"
+        local service="$3"
+        result=$(sqlplus -S /nolog <<EOF
+        connect $user/$password@$service as sysdba;
+        set pagesize 0;
+        set feedback off heading off verify off;
+        select to_char(current_scn) from v\$database;
+        exit;
 EOF
 )
-   echo $current_scn
+        echo $current_scn
 }
 
 ########################
