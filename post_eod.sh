@@ -21,10 +21,21 @@
 #
 # 4. run eod
 # 5. check R2 is existed, then flashback to R2
+### 5.1. Existed: continue
+### 5.2. Not: failed
+# * - get_restore_point $user $pass $db $rp_name
+# * - return "OK" | "Failed"
+#
 # 6. check current scn = flashback scn
 ### 6.1. current scn == flashback scn: continue
 ### 6.2. current scn != flashback scn: failed
 # * - compare_scn $user $pass $db $rp_name
 # * - return "OK" | "Failed"
-# 7. start transport and apply redo
+#
+# 7. start transport and apply redo and check lag
+# * - start_apply.sh $user $pass $db
+# *** - check_lag.sh
+# *** - return "Sync" | "Not Sync"
+# * - return "Stopped" | "Failed"
+# * -
 ##########################
