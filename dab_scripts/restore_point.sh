@@ -3,6 +3,7 @@
 # f_rp_create_restore_point
 # f_rp_drop_restore_point
 # f_rp_restore_point_is_existed
+# f_rp_flashback_to_restore_point
 
    # local user="$1"
    # local password="$2"
@@ -72,5 +73,23 @@ EOF
       echo "NOT_EXISTED"
    else
       echo "EXISTED"
+   fi
+}
+
+# f_rp_flashback_to_restore_point
+function f_rp_flashback_to_restore_point() {
+   message=$(sqlplus -S /nolog <<EOF
+   connect $1/$2@$3 as sysdba;
+   set pages 0;
+   set heading off feedback on verify off;
+   flashback database to restore point $4;
+   exit;
+EOF
+   )
+   echo "$message" | grep -q "Flashback complete" > /dev/null
+   if [ $? -eq 0 ]; then
+      echo "SUCCESS"
+   else
+      echo "FAILED"
    fi
 }
