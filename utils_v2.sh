@@ -44,9 +44,9 @@ function compare_scn() {
         local password="$2"
         local service="$3"
         local restore_point_name="$4"
-        current_scn=$(get_current_scn "sys" "oracle" "fccreport")
-        restore_point_scn=$(get_restore_point_scn "sys" "oracle" "fcclive" "PREEOD_R1_FCCREPORT")
-        if [ $current_scn -eq $restore_point_scn ]; then
+        current_scn=$(get_current_scn "$user" "$pass" "$service")
+        restore_point_scn=$(get_restore_point_scn "$user" "$pass" "$service" "$restore_point_name")
+        if [ "$current_scn" == "$restore_point_scn" ]; then
                 echo "Equal"
         else
                 echo "Not Equal"

@@ -14,7 +14,7 @@ function flashbackToRP() {
     set feedback on;
     shutdown immediate;
     startup mount;
-    flashback database to restore point $rp_name; 
+    flashback database to restore point $rp_name;
     exit;
 EOF
 )
@@ -38,7 +38,7 @@ function flashbackToSCN() {
     set feedback on;
     shutdown immediate;
     startup mount;
-    flashback database to scn $scn; 
+    flashback database to scn $scn;
     exit;
 EOF
 )
@@ -59,7 +59,7 @@ function cancelApplyLog() {
         exit;
 EOF
 )
-echo "$result" 
+echo "$result"
 }
 
 #cancelApplyLog "sys" "oracle123" "orcl"
