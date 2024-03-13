@@ -1,5 +1,5 @@
 #!/bin/bash
-. /home/oracle/db11_env orclstb
+. /home/oracle/db10g_env orclstb
 
 function getDbStart() {
         local user="$1"
@@ -53,7 +53,7 @@ EOF
 )
 echo "$result"
 }
-#getDbMode "sys" "oracle123" "orclstb"
+#getDbMode "sys" "oracle123" "mydb"
 
 function getDbName() {
         local user="$1"
@@ -103,7 +103,7 @@ EOF
 current_scn=$(echo "$result" | awk '{$1=$1};1')
 echo "$current_scn"
 }
-#getDbSCN "sys" "oracle123" "orclstb"
+#getDbSCN "sys" "oracle123" "mydb"
 
 ### Login validate
 function login_validate() {

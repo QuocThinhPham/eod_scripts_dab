@@ -31,7 +31,7 @@ function flashbackToSCN() {
     local password="$2"
     local service="$3"
     local scn="$4"
-    shudown=$(sqlplus -S /nolog <<EOF
+    shutdown=$(sqlplus -S /nolog <<EOF
     connect $user/$password@$service as sysdba;
     set heading off;
     set pagesize 0;
@@ -44,23 +44,21 @@ EOF
 )
 echo "$result"
 }
+#flashbackToSCN "sys" "oracle123" "orcl" "9143497"
 
-
-function cancelApplyLog() {
+function recoverToScn() {
     local user="$1"
     local password="$2"
     local service="$3"
-    result=$(sqlplus -S /nolog <<EOF
-        connect $user/$password@$service as sysdba;
-        set heading off;
-        set pagesize 0;
-        set feedback on;
-        alter database recover managed standby database cancel;
-        exit;
+    local scn="$4"
+    scn_until=$(($scn-1))
+    new_scn=$(echo "$scn_until")
+    echo "recover database until scn $new_scn"
+    result=$(rman target $user/$password@$service << EOF
+    recover database until scn $new_scn;
+    exit;
 EOF
 )
-echo "$result" 
+echo "$result"
 }
-
-#cancelApplyLog "sys" "oracle123" "orcl"
-#flashbackToSCN "sys" "oracle123" "orcl" "9143497"
+#recoverToScn "sys" "oracle123" "mydbstb" "2326345"
