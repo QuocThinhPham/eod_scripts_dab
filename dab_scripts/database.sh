@@ -211,27 +211,26 @@ function f_db_activate_stby_to_primary() {
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    if [ "$rp_is_existed" == "EXISTED" ]; then
       msg_rp_drop=$(f_rp_drop_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
-   else
-      msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
-      msg_check_rp_again="NOT_EXISTED"
-      while [ "$msg_check_rp_again" == "NOT_EXISTED" ]
-      do
-         if [ "$msg_check_rp_again" == "EXISTED" ]; then
-            break
-         fi
-         msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
-      done
+   fi
+   msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
+   msg_check_rp_again="NOT_EXISTED"
+   while [ "$msg_check_rp_again" == "NOT_EXISTED" ]
+   do
+      if [ "$msg_check_rp_again" == "EXISTED" ]; then
+         break
+      fi
+      msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
+   done
 
-      msg_activate=$(f_db_activate $user $pass $service)
-      if [ "$msg_activate" == "FAILED" ]; then
-         echo "Try again."
-         exit 0
-      else
-         db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
-         open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "read write")
-         if [ "$db_role_verified" == "VERIFIED" ] && [ "$open_mode_verified" == "VERIFIED" ]; then
-            printf "Activate Standby Database Successfully.\n"
-         fi
+   msg_activate=$(f_db_activate $user $pass $service)
+   if [ "$msg_activate" == "FAILED" ]; then
+      echo "Try again."
+      exit 0
+   else
+      db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
+      open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "read write")
+      if [ "$db_role_verified" == "VERIFIED" ] && [ "$open_mode_verified" == "VERIFIED" ]; then
+         printf "Activate Standby Database Successfully.\n"
       fi
    fi
 }
