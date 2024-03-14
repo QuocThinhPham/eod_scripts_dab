@@ -155,6 +155,9 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "#############################################" >> "$LOG_PATH"
+      echo "#### Physical Standby ACTIVATE:SUCCESS       " >> "$LOG_PATH"
+      echo "#############################################" >> "$LOG_PATH"
       echo "SUCCESS"
    else
       echo "FAILED"
@@ -176,6 +179,9 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "###########################################" >> "$LOG_PATH"
+      echo "#### CONVERT Physical Standby:SUCCESS      " >> "$LOG_PATH"
+      echo "###########################################" >> "$LOG_PATH"
       echo "SUCCESS"
    else
       echo "FAILED"
@@ -208,6 +214,10 @@ function f_db_activate_stby_to_primary() {
       exit 0
    fi
 
+   echo "############################################################" >> "$LOG_PATH"
+   echo "#### Database is Physical Standby and running in MOUNT mode." >> "$LOG_PATH"
+   echo "############################################################" >> "$LOG_PATH"
+
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    if [ "$rp_is_existed" == "EXISTED" ]; then
       msg_rp_drop=$(f_rp_drop_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
@@ -219,8 +229,15 @@ function f_db_activate_stby_to_primary() {
       if [ "$msg_check_rp_again" == "EXISTED" ]; then
          break
       fi
+      msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
       msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    done
+
+   now=$(date)
+   echo "Time: $now                                                  " >> "$LOG_PATH"
+   echo "#### Create restore point POSTEOD_R2_FCCREPORT." >> "$LOG_PATH"
+   echo "#### Can ACTIVATE Physical Standby.                         " >> "$LOG_PATH"
+   echo "############################################################" >> "$LOG_PATH"
 
    msg_activate=$(f_db_activate $user $pass $service)
    if [ "$msg_activate" == "FAILED" ]; then
@@ -230,7 +247,13 @@ function f_db_activate_stby_to_primary() {
       db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
       open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "read write")
       if [ "$db_role_verified" == "VERIFIED" ] && [ "$open_mode_verified" == "VERIFIED" ]; then
-         printf "Activate Standby Database Successfully.\n"
+         now=$(date)
+         echo "############################################################" >> "$LOG_PATH"
+         echo "Time: $now                                                  " >> "$LOG_PATH"
+         echo "#### Database is running on READ WRITE mode.                " >> "$LOG_PATH"
+         echo "#### Can run rebuild_index.sh                               " >> "$LOG_PATH"
+         echo "############################################################" >> "$LOG_PATH"
+         #sh rebuild_index.sh
       fi
    fi
 }
@@ -246,12 +269,21 @@ function f_db_revert_to_stby() {
       exit 0
    fi
 
+   now=$(date)
+   echo "Time: $now                        " >> "$LOG_PATH"
+   echo "#### Database STARTUP MOUNT FORCE." >> "$LOG_PATH"
+   echo "##################################" >> "$LOG_PATH"
+
    db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
    open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "mounted")
    if [ "$db_role_verified" == "NOT_VERIFIED" ] && [ "$open_mode_verified" == "NOT_VERIFIED" ]; then
       echo "Try again."
       exit 0
    fi
+
+   now=$(date)
+   echo "Time: $now                          " >> "$LOG_PATH"
+   echo "#### Can REVERT to Physical Standby." >> "$LOG_PATH"
 
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    if [ "$rp_is_existed" == "NOT_EXISTED" ]; then
@@ -264,11 +296,19 @@ function f_db_revert_to_stby() {
          exit 0
       fi
 
+      now=$(date)
+      echo "Time: $now                          " >> "$LOG_PATH"
+      echo "#### Flashback database successfully." >> "$LOG_PATH"
+
       msg_convert=$(f_db_convert_physical $user $pass $service)
       if [ "$msg_convert" == "FAILED" ]; then
          echo "Try again."
          exit 0
       fi
+
+      now=$(date)
+      echo "Time: $now                       " >> "$LOG_PATH"
+      echo "#### Convert to Physical Standby." >> "$LOG_PATH"
 
       msg_broker=$(f_dg_set_broker $user $pass $service "true")
       if [ "$msg_broker" == "FAILED" ]; then
@@ -276,15 +316,28 @@ function f_db_revert_to_stby() {
          exit 0
       fi
 
+      now=$(date)
+      echo "Time: $now                          " >> "$LOG_PATH"
+      echo "#### Set dg_broker_start: TRUE" >> "$LOG_PATH"
+
       msg_open_db=$(f_db_open_db $user $pass $service "mount force")
       if [ "$msg_open_db" == "FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
+      now=$(date)
+      echo "Time: $now                        " >> "$LOG_PATH"
+      echo "#### Database STARTUP MOUNT FORCE." >> "$LOG_PATH"
+      echo "##################################" >> "$LOG_PATH"
+
       scn_compared=$(f_db_compare_scn $user $pass $service "POSTEOD_R2_FCCREPORT")
       if [ "$scn_compared" == "EQUAL" ]; then
-         printf "Convert to Physical Standby Successfully.\n"
+         now=$(date)
+         echo "Time: $now                          " >> "$LOG_PATH"
+         echo "Convert to Physical Standby: SUCCESS" >> "$LOG_PATH"
+         echo "Begin Sync From Primary ...         " >> "$LOG_PATH"
+         echo "####################################" >> "$LOG_PATH"
       fi
    fi
 }

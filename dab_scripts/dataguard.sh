@@ -15,6 +15,9 @@ EOF
    )
    echo "$message" | grep -q "System altered" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "################################" >> "$LOG_PATH"
+      echo "##### Set dg_broker_start=$value" >> "$LOG_PATH"
+      echo "################################" >> "$LOG_PATH"
       echo "Set dg_broker_start: $value"
    else
       echo "FAILED"
@@ -33,6 +36,9 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "###############################" >> "$LOG_PATH"
+      echo "##### Stop The Managed Recovery" >> "$LOG_PATH"
+      echo "###############################" >> "$LOG_PATH"
       echo "SUCCESS"
    else
       echo "FAILED"
@@ -50,6 +56,9 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "###############################" >> "$LOG_PATH"
+      echo "#### Start The Managed Recovery" >> "$LOG_PATH"
+      echo "###############################" >> "$LOG_PATH"
       echo "SUCCESS"
    else
       echo "FAILED"
@@ -66,12 +75,15 @@ function f_dg_mrp_is_active() {
 EOF
    )
    if [ "$number_of_mrp" -eq 0 ]; then
+      echo "################################################" >> "$LOG_PATH"
+      echo "#### The Managed Recovery process is not active." >> "$LOG_PATH"
+      echo "################################################" >> "$LOG_PATH"
       echo "NOT_ACTIVE"
-      # echo "The Managed Recovery process is not active."
-      return 0
    else
+      echo "################################################" >> "$LOG_PATH"
+      echo "#### The Managed Recovery process is active.    " >> "$LOG_PATH"
+      echo "################################################" >> "$LOG_PATH"
       echo "ACTIVE"
-      # echo "The Managed Recovery process is active."
    fi
 }
 

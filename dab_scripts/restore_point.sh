@@ -45,7 +45,15 @@ function f_rp_create_restore_point() {
    exit;
 EOF
    )
-   echo "$message"
+   echo "$message" | grep -q "Restore point created" > /dev/null
+   if [ $? -eq 0 ]; then
+      echo "################################" >> "$LOG_PATH"
+      echo "#### Restore point is created.  " >> "$LOG_PATH"
+      echo "################################" >> "$LOG_PATH"
+      echo "SUCCESS"
+   else
+      echo "FAILED"
+   fi
 }
 # f_rp_drop_restore_point
 function f_rp_drop_restore_point() {
@@ -57,7 +65,15 @@ function f_rp_drop_restore_point() {
    exit;
 EOF
    )
-   echo "$message"
+   echo "$message" | grep -q "Restore point dropped" > /dev/null
+   if [ $? -eq 0 ]; then
+      echo "################################" >> "$LOG_PATH"
+      echo "#### Restore point is dropped.  " >> "$LOG_PATH"
+      echo "################################" >> "$LOG_PATH"
+      echo "SUCCESS"
+   else
+      echo "FAILED"
+   fi
 }
 # f_rp_restore_point_is_existed
 function f_rp_restore_point_is_existed() {
@@ -88,6 +104,9 @@ EOF
    )
    echo "$message" | grep -q "Flashback complete" > /dev/null
    if [ $? -eq 0 ]; then
+      echo "#############################################" >> "$LOG_PATH"
+      echo "#### Flashback to restore point $4: SUCCESS  " >> "$LOG_PATH"
+      echo "#############################################" >> "$LOG_PATH"
       echo "SUCCESS"
    else
       echo "FAILED"
