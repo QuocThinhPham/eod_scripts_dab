@@ -45,9 +45,9 @@ if [ "$rp_r1" = "existing" ]; then
     fi
 fi
 
-### 4. Create R1
+### 3. Create R1
 echo ""
-echo "4. Create restore point $rp_name"
+echo "3. Create restore point $rp_name"
 if [ "$db_role" = "PRIMARY" ] && [ "$rp_r1" = "none" ]; then
     echo "--- On Primary"
     ### Cancel apply log in standby
@@ -68,14 +68,13 @@ fi
 
 if [ "$db_role" = "PHYSICAL STANDBY" ] && [ "$rp_r1" = "none" ]; then
     echo "--- On Standby"
-    ### Thuc hien tao tren stb
-    echo "$PRIM_SVC"
-    scn_r1=$(getR1_SCN "$user" "$password" "$PRIM_SVC" "$rp_name")
+    ### Thuc hien tao rp tren stb
+    scn_r1=$(getR1_SCN "$user" "$password" "$PRIM_SVC" "$RP_NAME_PRIM")
     echo "$scn_r1"
-    echo "--> Waiting standby recieve redo log $scn_r1 ........"
+    echo "--> Waiting standby recieve redo log $scn_r1
     waitSequenceEqualPrimStb "$user" "$password" "$service"
 
-    echo "--> Recover database until scn $scn_r1 ........"
+    echo "--> Recover database until scn $scn_r1
     recover=$(recoverToScn "$user" "$password" "$service" "$scn_r1")
 
     create_r1=$(createR1 "$user" "$password" "$service" "$rp_name")
@@ -85,7 +84,7 @@ fi
 # thong bao tao thanh cong hay that bai
 rp_r1=$(getR1 "$user" "$password" "$service" "$rp_name")
 if [ "$rp_r1" = "existing" ]; then
-    echo "Done create restore point in $db_role....."
+    echo "Done create restore point in $db_role
 else
-    echo "Fail create restore point in $db_role....."
+    echo "Fail create restore point in $db_role
 fi

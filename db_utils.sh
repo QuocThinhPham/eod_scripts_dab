@@ -1,5 +1,6 @@
 #!/bin/bash
 . /home/oracle/db10g_env orclstb
+source ./init.sh
 
 function getDbStart() {
         local user="$1"
