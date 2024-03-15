@@ -15,4 +15,4 @@ RP_NAME_STB="EOD_RP_STB"
 . /home/oracle/db10g_env $PRIM_SVC
 
 # Log file
-LOG_FILE="/home/oracle/out2.log"
+LOG_FILE="/home/oracle/huyth/out2.log"

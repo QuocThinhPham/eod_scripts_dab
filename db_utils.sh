@@ -1,5 +1,5 @@
 #!/bin/bash
-. /home/oracle/db10g_env orclstb
+# . /home/oracle/db10g_env orclstb
 source ./init.sh
 
 function getDbStart() {
@@ -22,6 +22,7 @@ function getDbStart() {
 #    echo "Db up"
 #fi
 
+#getDbRole "sys" "oracle123" "orclstb"
 function getDbRole() {
         local user="$1"
         local password="$2"
@@ -37,8 +38,8 @@ EOF
 )
 echo "$result"
 }
-#getDbRole "sys" "oracle123" "orclstb"
 
+#getDbMode "sys" "oracle123" "mydb"
 function getDbMode() {
         local user="$1"
         local password="$2"
@@ -54,7 +55,6 @@ EOF
 )
 echo "$result"
 }
-#getDbMode "sys" "oracle123" "mydb"
 
 function getDbName() {
         local user="$1"
@@ -88,6 +88,7 @@ EOF
 echo "$result"
 }
 
+#getDbSCN "sys" "oracle123" "mydb"
 function getDbSCN() {
         local user="$1"
         local password="$2"
@@ -104,9 +105,9 @@ EOF
 current_scn=$(echo "$result" | awk '{$1=$1};1')
 echo "$current_scn"
 }
-#getDbSCN "sys" "oracle123" "mydb"
 
 ### Login validate
+#login_validate "sys" "oracle123" "orclstb"
 function login_validate() {
         local user="$1"
         local password="$2"
@@ -118,4 +119,3 @@ function login_validate() {
                 echo "Login success"
         fi
 }
-#login_validate "sys" "oracle123" "orclstb"

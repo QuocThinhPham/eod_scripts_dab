@@ -26,6 +26,7 @@ else
 fi
 }
 
+#flashbackToSCN "sys" "oracle123" "orcl" "9143497"
 function flashbackToSCN() {
     local user="$1"
     local password="$2"
@@ -44,8 +45,8 @@ EOF
 )
 echo "$result"
 }
-#flashbackToSCN "sys" "oracle123" "orcl" "9143497"
 
+#recoverToScn "sys" "oracle123" "mydbstb" "2326345"
 function recoverToScn() {
     local user="$1"
     local password="$2"
@@ -61,4 +62,3 @@ EOF
 )
 echo "$result"
 }
-#recoverToScn "sys" "oracle123" "mydbstb" "2326345"
