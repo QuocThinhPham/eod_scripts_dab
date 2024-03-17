@@ -1,8 +1,6 @@
-# f_dg_stop_mrp
-# f_dg_start_mrp
-# f_dg_mrp_is_active
-# f_dg_check_apply_lag
-
+# DESC: Set dg_broker_start
+# f_dg_set_broker "$user" "$pass" "$service" "$value"
+# return 'SUCCESS' | 'FAILED'
 function f_dg_set_broker() {
    value=$(echo "$4" | awk '{print toupper($0)}')
    message=$(sqlplus -S /nolog <<EOF
@@ -15,16 +13,17 @@ EOF
    )
    echo "$message" | grep -q "System altered" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "################################" >> "$LOG_PATH"
-      echo "##### Set dg_broker_start=$value" >> "$LOG_PATH"
-      echo "################################" >> "$LOG_PATH"
-      echo "Set dg_broker_start: $value"
+      f_u_show_log "$LOG_PATH" "Completed: Set dg_broker_start='$value'."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Set dg_broker_start='$value'."
+      echo "$FAILED"
    fi
 }
 
-# f_dg_stop_mrp
+# DESC: Cancel The Managed Recovery
+# f_dg_stop_mrp "$user" "$pass" "$service"
+# return 'SUCCESS' | 'FAILED'
 function f_dg_stop_mrp() {
    message=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -36,15 +35,18 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "###############################" >> "$LOG_PATH"
-      echo "##### Stop The Managed Recovery" >> "$LOG_PATH"
-      echo "###############################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Stop The Managed Recovery."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Stop The Managed Recovery."
+      echo "$FAILED"
    fi
 }
-# f_dg_start_mrp
+
+
+# DESC: Start The Managed Recovery
+# f_dg_start_mrp "$user" "$pass" "$service"
+# return 'SUCCESS' | 'FAILED'
 function f_dg_start_mrp() {
    message=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -56,15 +58,17 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "###############################" >> "$LOG_PATH"
-      echo "#### Start The Managed Recovery" >> "$LOG_PATH"
-      echo "###############################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Start The Managed Recovery."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Start The Managed Recovery."
+      echo "$FAILED"
    fi
 }
-# f_dg_mrp_is_active
+
+# DESC: Check The Managed Recovery Process
+# f_dg_mrp_is_active "$user" "$pass" "$service"
+# return 'ACTIVE' | 'NOT_ACTIVE'
 function f_dg_mrp_is_active() {
    number_of_mrp=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -75,19 +79,17 @@ function f_dg_mrp_is_active() {
 EOF
    )
    if [ "$number_of_mrp" -eq 0 ]; then
-      echo "################################################" >> "$LOG_PATH"
-      echo "#### The Managed Recovery process is not active." >> "$LOG_PATH"
-      echo "################################################" >> "$LOG_PATH"
-      echo "NOT_ACTIVE"
+      f_u_show_log "$LOG_PATH" "The Managed Recovery process is not active."
+      echo "$NOT_ACTIVE"
    else
-      echo "################################################" >> "$LOG_PATH"
-      echo "#### The Managed Recovery process is active.    " >> "$LOG_PATH"
-      echo "################################################" >> "$LOG_PATH"
-      echo "ACTIVE"
+      f_u_show_log "$LOG_PATH" "The Managed Recovery process is active."
+      echo "$ACTIVE"
    fi
 }
 
-# f_dg_check_apply_lag
+# DESC: Check The Managed Recovery Process
+# f_dg_check_apply_lag "$user" "$pass" "$service"
+# return
 function f_dg_check_apply_lag() {
    transport_lag=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;

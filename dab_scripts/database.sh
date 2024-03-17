@@ -1,12 +1,6 @@
-# f_db_open_mode
-# f_db_database_role
-# f_db_get_current_scn
-# f_db_verify_database
-# f_db_activate_stby_to_primary
-# f_db_revert_to_stby
-# f_db_compare_scn
-
-# f_db_open_mode
+# DESC: Get db Open Mode
+# f_db_open_mode "$user" "$pass" "$service"
+# return 'open_mode'
 function f_db_open_mode() {
    open_mode=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -18,7 +12,10 @@ EOF
    )
    echo "$open_mode"
 }
-# f_db_database_role
+
+# DESC: Get db role
+# f_db_database_role "$user" "$pass" "$service"
+# return 'database_mode'
 function f_db_database_role() {
    database_role=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -30,7 +27,10 @@ EOF
    )
    echo "$database_role"
 }
-# f_db_get_current_scn
+
+# DESC: Get db current scn
+# f_db_get_current_scn "$user" "$pass" "$service"
+# return 'current_scn'
 function f_db_get_current_scn() {
    current_scn=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -42,26 +42,53 @@ EOF
    )
    echo "$current_scn"
 }
-# f_db_verify_database $user $pass $service $check_what $value_to_check
+
+# DESC: Verify database_role and open_mode
+# f_db_verify_database "$user" "$pass" "$service" "$check_what" "$value_to_check"
+# return 'VERIFIED' | 'NOT_VERIFIED' | ''
 function f_db_verify_database() {
    local user="$1"
    local pass="$2"
    local service="$3"
    local check_what=$(echo "$4" | awk '{print toupper($0)}')
    local value_to_check=$(echo "$5" | awk '{print toupper($0)}')
-   if [ "$check_what" == "DATABASE_ROLE" ]; then
+
+   # case statement
+   # case "$check_what" in
+   #    "DATABASE_ROLE")
+   #       database_role=$(f_db_database_role $user $pass $service)
+   #       if [ "$value_to_check" == "$database_role" ]; then
+   #          echo "$VERIFIED"
+   #       else
+   #          echo "$NOT_VERIFIED"
+   #       fi
+   #       ;;
+   #    "OPEN_MODE")
+   #       open_mode=$(f_db_open_mode $user $pass $service)
+   #       if [ "$value_to_check" == "$open_mode" ]; then
+   #          echo "$VERIFIED"
+   #       else
+   #          echo "$NOT_VERIFIED"
+   #       fi
+   #       ;;
+   #    *)
+   #       echo ""
+   #       ;;
+   # esac
+
+   if [ "$check_what" == "$DATABASE_ROLE" ]; then
       database_role=$(f_db_database_role $user $pass $service)
       if [ "$value_to_check" == "$database_role" ]; then
-         echo "VERIFIED"
+         echo "$VERIFIED"
       else
-         echo "NOT_VERIFIED"
+         echo "$NOT_VERIFIED"
       fi
-   elif [ "$check_what" == "OPEN_MODE" ]; then
+   elif [ "$check_what" == "$OPEN_MODE" ]; then
       open_mode=$(f_db_open_mode $user $pass $service)
-         if [ "$value_to_check" == "$open_mode" ]; then
-         echo "VERIFIED"
+      if [ "$value_to_check" == "$open_mode" ]; then
+         echo "$VERIFIED"
       else
-         echo "NOT_VERIFIED"
+         echo "$NOT_VERIFIED"
       fi
    else
       echo ""
@@ -69,7 +96,9 @@ function f_db_verify_database() {
    fi
 }
 
+# DESC: Start database with mode
 # f_db_open_db $user $pass $service $mode
+# return 'SUCCESS' | 'FAILED'
 function f_db_open_db() {
    local user="$1"
    local pass="$2"
@@ -90,13 +119,15 @@ EOF
    fi
    echo "$message" | grep -qe "instance started" -e "Database mounted" -e "Database opened" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "SUCCESS"
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      echo "$FAILED"
    fi
 }
 
-# f_db_shutdown_db
+# DESC: Shutdown database with mode
+# f_db_shutdown_db $user $pass $service $mode
+# return 'SUCCESS' | 'FAILED'
 function f_db_shutdown_db() {
    local user="$1"
    local pass="$2"
@@ -111,20 +142,22 @@ EOF
    else
    message=$(sqlplus -S /nolog << EOF
    connect $1/$2@$3 as sysdba;
-   startup $mode;
+   shutdown $mode;
 EOF
    )
    fi
    echo "$message" | grep -qe "instance shut down" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "SUCCESS"
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      echo "$FAILED"
    fi
 }
 
 
-# f_db_compare_scn
+# DESC: Compare two SCN: Current SCN <> Restore Point SCN
+# f_db_compare_scn $user $pass $service $restore_point_name
+# return 'EQUAL' | 'NOT_EQUAL'
 function f_db_compare_scn() {
    local user="$1"
    local pass="$2"
@@ -133,9 +166,9 @@ function f_db_compare_scn() {
    current_scn=$(f_db_get_current_scn $user $pass $service)
    restore_point_scn=$(f_rp_get_restore_point_scn $user $pass $service $restore_point_name)
    if [ "$current_scn" == "$restore_point_scn" ]; then
-      echo "EQUAL"
+      echo "$EQUAL"
    else
-      echo "NOT_EQUAL"
+      echo "$NOT_EQUAL"
    fi
 }
 
@@ -155,6 +188,7 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
+      f_u_show_log "$LOG_PATH" "Completed: Activate Physical Standby"
       echo "#############################################" >> "$LOG_PATH"
       echo "#### Physical Standby ACTIVATE:SUCCESS       " >> "$LOG_PATH"
       echo "#############################################" >> "$LOG_PATH"
@@ -194,7 +228,7 @@ function f_db_activate_stby_to_primary() {
    local pass="$2"
    local service="$3"
    msg_broker=$(f_dg_set_broker $user $pass $service "false")
-   if [ "$msg_broker" == "FAILED" ]; then
+   if [ "$msg_broker" == "$FAILED" ]; then
       echo "Try again."
       exit 0
    fi
@@ -202,14 +236,14 @@ function f_db_activate_stby_to_primary() {
    msg_stop_mrp=$(f_dg_stop_mrp $user $pass $service)
 
    mrp_is_active=$(f_dg_mrp_is_active $user $pass $service)
-   if [ "$mrp_is_active" == "ACTIVE" ]; then
+   if [ "$mrp_is_active" == "$ACTIVE" ]; then
       echo "Try again."
       exit 0
    fi
 
    db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "physical standby")
    open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "mounted")
-   if [ "$db_role_verified" == "NOT_VERIFIED" ] && [ "$open_mode_verified" == "NOT_VERIFIED" ]; then
+   if [ "$db_role_verified" == "$NOT_VERIFIED" ] && [ "$open_mode_verified" == "$NOT_VERIFIED" ]; then
       echo "Try again."
       exit 0
    fi
@@ -219,14 +253,14 @@ function f_db_activate_stby_to_primary() {
    echo "############################################################" >> "$LOG_PATH"
 
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
-   if [ "$rp_is_existed" == "EXISTED" ]; then
+   if [ "$rp_is_existed" == "$EXISTED" ]; then
       msg_rp_drop=$(f_rp_drop_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
    fi
    msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
-   msg_check_rp_again="NOT_EXISTED"
-   while [ "$msg_check_rp_again" == "NOT_EXISTED" ]
+   msg_check_rp_again="$NOT_EXISTED"
+   while [ "$msg_check_rp_again" == "$NOT_EXISTED" ]
    do
-      if [ "$msg_check_rp_again" == "EXISTED" ]; then
+      if [ "$msg_check_rp_again" == "$EXISTED" ]; then
          break
       fi
       msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
@@ -246,7 +280,7 @@ function f_db_activate_stby_to_primary() {
    else
       db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
       open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "read write")
-      if [ "$db_role_verified" == "VERIFIED" ] && [ "$open_mode_verified" == "VERIFIED" ]; then
+      if [ "$db_role_verified" == "$VERIFIED" ] && [ "$open_mode_verified" == "$VERIFIED" ]; then
          now=$(date)
          echo "############################################################" >> "$LOG_PATH"
          echo "Time: $now                                                  " >> "$LOG_PATH"
@@ -264,80 +298,61 @@ function f_db_revert_to_stby() {
    local pass="$2"
    local service="$3"
    msg_open_db=$(f_db_open_db $user $pass $service "mount force")
-   if [ "$msg_open_db" == "FAILED" ]; then
+   if [ "$msg_open_db" == "$FAILED" ]; then
       echo "Try again."
       exit 0
    fi
 
-   now=$(date)
-   echo "Time: $now                        " >> "$LOG_PATH"
-   echo "#### Database STARTUP MOUNT FORCE." >> "$LOG_PATH"
-   echo "##################################" >> "$LOG_PATH"
+   f_u_show_log "$LOG_PATH" "Database STARTUP MOUNT FORCE."
 
    db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
    open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "mounted")
-   if [ "$db_role_verified" == "NOT_VERIFIED" ] && [ "$open_mode_verified" == "NOT_VERIFIED" ]; then
+   if [ "$db_role_verified" == "$NOT_VERIFIED" ] && [ "$open_mode_verified" == "$NOT_VERIFIED" ]; then
       echo "Try again."
       exit 0
    fi
 
-   now=$(date)
-   echo "Time: $now                          " >> "$LOG_PATH"
-   echo "#### Can REVERT to Physical Standby." >> "$LOG_PATH"
-
+   # Print message into log file
+   f_u_show_log "$LOG_PATH" "Can REVERT to Physical Standby."
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
-   if [ "$rp_is_existed" == "NOT_EXISTED" ]; then
+   if [ "$rp_is_existed" == "$NOT_EXISTED" ]; then
       echo "Try again."
       exit 0
    else
       msg_flashback=$(f_rp_flashback_to_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
-      if [ "$msg_flashback" == "FAILED" ]; then
+      if [ "$msg_flashback" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
-      now=$(date)
-      echo "Time: $now                          " >> "$LOG_PATH"
-      echo "#### Flashback database successfully." >> "$LOG_PATH"
-
+      f_u_show_log "$LOG_PATH" "Flashback database successfully."
       msg_convert=$(f_db_convert_physical $user $pass $service)
-      if [ "$msg_convert" == "FAILED" ]; then
+      if [ "$msg_convert" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
-      now=$(date)
-      echo "Time: $now                       " >> "$LOG_PATH"
-      echo "#### Convert to Physical Standby." >> "$LOG_PATH"
+      f_u_show_log "$LOG_PATH" "Convert to Physical Standby."
 
       msg_broker=$(f_dg_set_broker $user $pass $service "true")
-      if [ "$msg_broker" == "FAILED" ]; then
+      if [ "$msg_broker" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
-      now=$(date)
-      echo "Time: $now                          " >> "$LOG_PATH"
-      echo "#### Set dg_broker_start: TRUE" >> "$LOG_PATH"
+      f_u_show_log "$LOG_PATH" "Set dg_broker_start: TRUE"
 
       msg_open_db=$(f_db_open_db $user $pass $service "mount force")
-      if [ "$msg_open_db" == "FAILED" ]; then
+      if [ "$msg_open_db" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
-      now=$(date)
-      echo "Time: $now                        " >> "$LOG_PATH"
-      echo "#### Database STARTUP MOUNT FORCE." >> "$LOG_PATH"
-      echo "##################################" >> "$LOG_PATH"
+      f_u_show_log "$LOG_PATH" "Database STARTUP MOUNT FORCE."
 
       scn_compared=$(f_db_compare_scn $user $pass $service "POSTEOD_R2_FCCREPORT")
-      if [ "$scn_compared" == "EQUAL" ]; then
-         now=$(date)
-         echo "Time: $now                          " >> "$LOG_PATH"
-         echo "Convert to Physical Standby: SUCCESS" >> "$LOG_PATH"
-         echo "Begin Sync From Primary ...         " >> "$LOG_PATH"
-         echo "####################################" >> "$LOG_PATH"
+      if [ "$scn_compared" == "$EQUAL" ]; then
+         f_u_show_log "$LOG_PATH" "Convert to Physical Standby: SUCCESS\nBegin Sync From Primary ..."
       fi
    fi
 }

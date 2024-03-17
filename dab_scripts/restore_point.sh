@@ -1,16 +1,6 @@
-# f_rp_get_restore_point_name
-# f_rp_get_restore_point_scn
-# f_rp_create_restore_point
-# f_rp_drop_restore_point
-# f_rp_restore_point_is_existed
-# f_rp_flashback_to_restore_point
-
-   # local user="$1"
-   # local password="$2"
-   # local service="$3"
-   # local restore_point_name="$4"
-
-# f_rp_get_restore_point_name
+# DESC: Get Restore Point Name
+# f_rp_get_restore_point_name "$user" "$pass" "$service" "$restore_point_name"
+# return 'restore_point_name'
 function f_rp_get_restore_point_name() {
    rp_name=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -23,7 +13,9 @@ EOF
    echo "$rp_name"
 }
 
-# f_rp_get_restore_point_scn
+# DESC: Get Restore Point SCN
+# f_rp_get_restore_point_scn "$user" "$pass" "$service" "$restore_point_name"
+# return 'restore_point_scn'
 function f_rp_get_restore_point_scn() {
    rp_scn=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -35,7 +27,10 @@ EOF
    )
    echo "$rp_scn"
 }
-# f_rp_create_restore_point
+
+# DESC: Create Restore Point
+# f_rp_create_restore_point "$user" "$pass" "$service" "$restore_point_name"
+# return 'SUCCESS' | 'FAILED'
 function f_rp_create_restore_point() {
    message=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -47,15 +42,17 @@ EOF
    )
    echo "$message" | grep -q "Restore point created" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "################################" >> "$LOG_PATH"
-      echo "#### Restore point is created.  " >> "$LOG_PATH"
-      echo "################################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Create Restore Point $4."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Completed: Create Restore Point $4."
+      echo "$FAILED"
    fi
 }
-# f_rp_drop_restore_point
+
+# DESC: Drop Restore Point
+# f_rp_drop_restore_point "$user" "$pass" "$service" "$restore_point_name"
+# return 'SUCCESS' | 'FAILED'
 function f_rp_drop_restore_point() {
    message=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -67,15 +64,19 @@ EOF
    )
    echo "$message" | grep -q "Restore point dropped" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "################################" >> "$LOG_PATH"
-      echo "#### Restore point is dropped.  " >> "$LOG_PATH"
-      echo "################################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      echo "$(date)" >> "$LOG_PATH"
+      echo "Completed: Drop restore point $4." >> "$LOG_PATH"
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      echo "$(date)" >> "$LOG_PATH"
+      echo "Failed: Drop restore point $4." >> "$LOG_PATH"
+      echo "$FAILED"
    fi
 }
-# f_rp_restore_point_is_existed
+
+# DESC: Check Restore Point
+# f_rp_restore_point_is_existed "$user" "$pass" "$service" "$restore_point_name"
+# return 'EXISTED' | 'NOT_EXISTED'
 function f_rp_restore_point_is_existed() {
    is_existed=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -86,13 +87,17 @@ function f_rp_restore_point_is_existed() {
 EOF
    )
    if [ "$is_existed" -eq 0 ]; then
-      echo "NOT_EXISTED"
+      f_u_show_log "$LOG_PATH" "Check Restore Point $4: Not Existed."
+      echo "$NOT_EXISTED"
    else
-      echo "EXISTED"
+      f_u_show_log "$LOG_PATH" "Check Restore Point $4: Existed."
+      echo "$EXISTED"
    fi
 }
 
-# f_rp_flashback_to_restore_point
+# DESC: Flashback to Restore Point
+# f_rp_flashback_to_restore_point "$user" "$pass" "$service" "$restore_point_name"
+# return 'SUCCESS' | 'FAILED'
 function f_rp_flashback_to_restore_point() {
    message=$(sqlplus -S /nolog <<EOF
    connect $1/$2@$3 as sysdba;
@@ -104,11 +109,10 @@ EOF
    )
    echo "$message" | grep -q "Flashback complete" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "#############################################" >> "$LOG_PATH"
-      echo "#### Flashback to restore point $4: SUCCESS  " >> "$LOG_PATH"
-      echo "#############################################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Flashback to Restore Point $4."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Flashback to Restore Point $4."
+      echo "$FAILED"
    fi
 }
