@@ -119,8 +119,11 @@ EOF
    fi
    echo "$message" | grep -qe "instance started" -e "Database mounted" -e "Database opened" > /dev/null
    if [ $? -eq 0 ]; then
+   # $( ((${#mode} == 0)) && echo "" || echo " $mode" )
+      f_u_show_log "$LOG_PATH" "Completed: Startup$( ((${#mode} == 0)) && echo "" || echo " $mode" )."
       echo "$SUCCESS"
    else
+      f_u_show_log "$LOG_PATH" "Failed: Startup$( ((${#mode} == 0)) && echo "" || echo " $mode" )."
       echo "$FAILED"
    fi
 }
@@ -148,8 +151,10 @@ EOF
    fi
    echo "$message" | grep -qe "instance shut down" > /dev/null
    if [ $? -eq 0 ]; then
+      f_u_show_log "$LOG_PATH" "Completed: Shutdown $( ((${#mode} == 0)) && echo "immediate" || echo "$mode" )"
       echo "$SUCCESS"
    else
+      f_u_show_log "$LOG_PATH" "Failed: Shutdown $( ((${#mode} == 0)) && echo "immediate" || echo "$mode" )"
       echo "$FAILED"
    fi
 }
@@ -166,8 +171,10 @@ function f_db_compare_scn() {
    current_scn=$(f_db_get_current_scn $user $pass $service)
    restore_point_scn=$(f_rp_get_restore_point_scn $user $pass $service $restore_point_name)
    if [ "$current_scn" == "$restore_point_scn" ]; then
+      f_u_show_log "$LOG_PATH" "Completed: Compare SCN: EQUAL."
       echo "$EQUAL"
    else
+      f_u_show_log "$LOG_PATH" "Completed: Compare SCN: NOT EQUAL."
       echo "$NOT_EQUAL"
    fi
 }
@@ -188,13 +195,11 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
-      f_u_show_log "$LOG_PATH" "Completed: Activate Physical Standby"
-      echo "#############################################" >> "$LOG_PATH"
-      echo "#### Physical Standby ACTIVATE:SUCCESS       " >> "$LOG_PATH"
-      echo "#############################################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Activate Physical Standby."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Activate Physical Standby."
+      echo "$FAILED"
    fi
 }
 
@@ -213,12 +218,11 @@ EOF
    )
    echo "$message" | grep -q "Database altered" > /dev/null
    if [ $? -eq 0 ]; then
-      echo "###########################################" >> "$LOG_PATH"
-      echo "#### CONVERT Physical Standby:SUCCESS      " >> "$LOG_PATH"
-      echo "###########################################" >> "$LOG_PATH"
-      echo "SUCCESS"
+      f_u_show_log "$LOG_PATH" "Completed: Convert to Physical Standby."
+      echo "$SUCCESS"
    else
-      echo "FAILED"
+      f_u_show_log "$LOG_PATH" "Failed: Convert to Physical Standby."
+      echo "$FAILED"
    fi
 }
 
@@ -248,9 +252,7 @@ function f_db_activate_stby_to_primary() {
       exit 0
    fi
 
-   echo "############################################################" >> "$LOG_PATH"
-   echo "#### Database is Physical Standby and running in MOUNT mode." >> "$LOG_PATH"
-   echo "############################################################" >> "$LOG_PATH"
+   f_u_show_log "$LOG_PATH" "Database is Physical Standby and running in MOUNT mode."
 
    rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    if [ "$rp_is_existed" == "$EXISTED" ]; then
@@ -267,26 +269,17 @@ function f_db_activate_stby_to_primary() {
       msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
    done
 
-   now=$(date)
-   echo "Time: $now                                                  " >> "$LOG_PATH"
-   echo "#### Create restore point POSTEOD_R2_FCCREPORT." >> "$LOG_PATH"
-   echo "#### Can ACTIVATE Physical Standby.                         " >> "$LOG_PATH"
-   echo "############################################################" >> "$LOG_PATH"
+   f_u_show_log "$LOG_PATH" "Create restore point POSTEOD_R2_FCCREPORT.\nCan ACTIVATE Physical Standby."
 
    msg_activate=$(f_db_activate $user $pass $service)
-   if [ "$msg_activate" == "FAILED" ]; then
+   if [ "$msg_activate" == "$FAILED" ]; then
       echo "Try again."
       exit 0
    else
       db_role_verified=$(f_db_verify_database $user $pass $service "database_role" "primary")
       open_mode_verified=$(f_db_verify_database $user $pass $service "open_mode" "read write")
       if [ "$db_role_verified" == "$VERIFIED" ] && [ "$open_mode_verified" == "$VERIFIED" ]; then
-         now=$(date)
-         echo "############################################################" >> "$LOG_PATH"
-         echo "Time: $now                                                  " >> "$LOG_PATH"
-         echo "#### Database is running on READ WRITE mode.                " >> "$LOG_PATH"
-         echo "#### Can run rebuild_index.sh                               " >> "$LOG_PATH"
-         echo "############################################################" >> "$LOG_PATH"
+         f_u_show_log "$LOG_PATH" "Database is running on READ WRITE mode.\nCan run rebuild_index.sh"
          #sh rebuild_index.sh
       fi
    fi
@@ -325,22 +318,17 @@ function f_db_revert_to_stby() {
          exit 0
       fi
 
-      f_u_show_log "$LOG_PATH" "Flashback database successfully."
       msg_convert=$(f_db_convert_physical $user $pass $service)
       if [ "$msg_convert" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
 
-      f_u_show_log "$LOG_PATH" "Convert to Physical Standby."
-
       msg_broker=$(f_dg_set_broker $user $pass $service "true")
       if [ "$msg_broker" == "$FAILED" ]; then
          echo "Try again."
          exit 0
       fi
-
-      f_u_show_log "$LOG_PATH" "Set dg_broker_start: TRUE"
 
       msg_open_db=$(f_db_open_db $user $pass $service "mount force")
       if [ "$msg_open_db" == "$FAILED" ]; then
