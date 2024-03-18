@@ -1,5 +1,6 @@
 # sh test_script.sh
 source ./constants.sh
+source ./utils.sh
 source ./dataguard.sh
 source ./restore_point.sh
 source ./database.sh

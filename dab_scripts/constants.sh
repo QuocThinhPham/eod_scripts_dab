@@ -18,5 +18,3 @@ MONTH=$(date +"%m")
 YEAR=$(date +"%Y")
 
 LOG_PATH="/home/oracle/shell_scripts/v2/logs/log_${DAY}_${MONTH}_${YEAR}.log"
-
-# f_u_show_log
