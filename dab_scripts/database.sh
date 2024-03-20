@@ -344,3 +344,22 @@ function f_db_revert_to_stby() {
       fi
    fi
 }
+
+# f_db_failed_eod $USER $PASS $PRIM_SERVICE $STBY_SERVICE
+function f_db_failed_eod() {
+   local user="$1"
+   local pass="$2"
+   local prim_service="$3"
+   local stby_service="$4"
+   local report_service="$5"
+   rp_prim=$(f_rp_restore_point_is_existed $user $pass $prim_service "PREEOD_R1_FCCLIVE")
+   rp_stby=$(f_rp_restore_point_is_existed $user $pass $prim_service "PREEOD_R1_FCCSTANDBY")
+   rp_report=$(f_rp_restore_point_is_existed $user $pass $report_service "PREEOD_R1_FCCREPORT")
+
+   # if [ "$rp_prim" == "$EXISTED" ] && [ "$rp_stby" == "$EXISTED" ] && [ "$rp_report" == "$EXISTED" ]; then
+   if [ "$rp_prim" == "$EXISTED" ] && [ "$rp_report" == "$EXISTED" ]; then
+      f_rp_flashback_to_restore_point $user $pass $prim_service "PREEOD_R1_FCCLIVE"
+      # f_rp_flashback_to_restore_point $user $pass $prim_service "PREEOD_R1_FCCSTANDBY"
+      f_rp_flashback_to_restore_point $user $pass $report_service "PREEOD_R1_FCCREPORT"
+   fi
+}
