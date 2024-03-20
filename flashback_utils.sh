@@ -52,11 +52,8 @@ function recoverToScn() {
     local password="$2"
     local service="$3"
     local scn="$4"
-    scn_until=$(($scn-1))
-    new_scn=$(echo "$scn_until")
-    echo "recover database until scn $new_scn"
     result=$(rman target $user/$password@$service << EOF
-    recover database until scn $new_scn;
+    recover database until scn $scn;
     exit;
 EOF
 )

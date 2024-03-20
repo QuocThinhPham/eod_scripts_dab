@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./init.sh
 
 #cancelApplyLog "sys" "oracle123" "orcl"
 function cancelApplyLog() {
@@ -57,12 +58,15 @@ function waitSequenceEqualPrimStb(){
     local user="$1"
     local password="$2"
     local service="$3"
-    sq_prim=$(getCurrentSequence "$1" "$2" "mydb")
+    # Chinh lai vong while 
+    sq_prim=$(getCurrentSequence "$1" "$2" "$PRIM_SVC")
     sq_stb=$(getCurrentSequence "$1" "$2" "$3")
     while [ "$sq_stb" -lt "$sq_prim" ]; do
-    echo "--> Current sequence is: $sq_stb"
+    echo "--> Current sequence primary is: $sq_prim"
+    echo "--> Current sequence standby is: $sq_stb"
     echo "--> Waiting standby receive redolog...."
     sleep 3;
+    sq_stb=$(getCurrentSequence "$1" "$2" "$3")
     done
 }
 

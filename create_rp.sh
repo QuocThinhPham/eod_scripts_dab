@@ -49,11 +49,13 @@ fi
 echo ""
 echo "3. Create restore point $rp_name"
 if [ "$db_role" = "PRIMARY" ] && [ "$rp_r1" = "none" ]; then
-    echo "--- On Primary"
+    echo "*** On Primary"
     ### Cancel apply log in standby
     echo "Cancel apply log in standby"
-    apply_off=$(cancelApplyLog "$user" "$password" "$STB1_SVC")
-    echo "$apply_off"
+    apply_off_stb1=$(cancelApplyLog "$user" "$password" "$STB1_SVC")
+    echo "$apply_off_stb1"
+    apply_off_stb2=$(cancelApplyLog "$user" "$password" "$STB2_SVC")
+    echo "$apply_off_stb2"
 
     ### Create restorepoint
     create_r1=$(createR1 "$user" "$password" "$service" "$rp_name")
@@ -67,15 +69,16 @@ if [ "$db_role" = "PRIMARY" ] && [ "$rp_r1" = "none" ]; then
 fi
 
 if [ "$db_role" = "PHYSICAL STANDBY" ] && [ "$rp_r1" = "none" ]; then
-    echo "--- On Standby"
+    echo "*** On Standby"
     ### Thuc hien tao rp tren stb
     scn_r1=$(getR1_SCN "$user" "$password" "$PRIM_SVC" "$RP_NAME_PRIM")
-    echo "$scn_r1"
-    echo "--> Waiting standby recieve redo log $scn_r1"
     waitSequenceEqualPrimStb "$user" "$password" "$service"
 
-    echo "--> Recover database until scn $scn_r1"
-    recover=$(recoverToScn "$user" "$password" "$service" "$scn_r1")
+    echo "--> SCN of Restore point: $scn_r1"
+    scn_until=$(($scn_r1 - 1))
+    new_scn=$(echo "$scn_until")
+    echo "--> Recover database until scn $new_scn"
+    recover=$(recoverToScn "$user" "$password" "$service" "$new_scn")
 
     create_r1=$(createR1 "$user" "$password" "$service" "$rp_name")
     echo "--> Create restore point: $create_r1"
