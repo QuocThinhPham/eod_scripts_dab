@@ -16,7 +16,10 @@ echo "" > "$LOG_PATH"
 
 USER="sys"
 PASS="oracle"
-STBY_SERVICE="fccreport"
+PRIM_SERVICE="fcclive"
+STBY_SERVICE="fccstandby"
+REPORT_SERVICE="fccreport"
 
-f_db_activate_stby_to_primary $USER $PASS $STBY_SERVICE
+# f_db_activate_stby_to_primary "sys" "oracle" "fccreport"
 # f_db_revert_to_stby $USER $PASS $STBY_SERVICE
+f_db_failed_eod $USER $PASS $PRIM_SERVICE $STBY_SERVICE $REPORT_SERVICE
