@@ -109,3 +109,25 @@ EOF
    )
    printf " - Transport Lag:\t%s\n - Apply Lag:\t\t%s\n" "$transport_lag" "$apply_lag"
 }
+
+# DESC:
+# f_dg_check_se "$user" "$pass" "$service"
+# return
+function f_dg_check_switchover_status() {
+   status=$(sqlplus -S /nolog <<EOF
+   connect $1/$2@$3 as sysdba;
+   set pages 0;
+   set heading off feedback off verify off;
+   select switchover_status from v\$database;
+   exit;
+EOF
+   )
+   echo "$status" | grep -q "NOT ALLOWED" > /dev/null
+   if [ $? -eq 0 ]; then
+      f_u_show_log "$LOG_PATH" ""
+      echo "$NOT_SYNC"
+   else
+      f_u_show_log "$LOG_PATH" ""
+      echo "$SYNC"
+   fi
+}
