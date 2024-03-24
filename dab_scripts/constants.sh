@@ -1,3 +1,4 @@
+# Constants
 SUCCESS="SUCCESS"
 FAILED="FAILED"
 ACTIVE="ACTIVE"
@@ -13,8 +14,20 @@ NOT_EQUAL="NOT_EQUAL"
 DATABASE_ROLE="DATABASE_ROLE"
 OPEN_MODE="OPEN_MODE"
 
+# Log Path File
 DAY=$(date +"%d")
 MONTH=$(date +"%m")
 YEAR=$(date +"%Y")
+# LOG_FOLDER="/log-eod"
+LOG_FOLDER="/home/oracle/shell_scripts/v2/logs"
+LOG_PATH="$LOG_PATH/log_${DAY}_${MONTH}_${YEAR}.log"
 
-LOG_PATH="/home/oracle/shell_scripts/v2/logs/log_${DAY}_${MONTH}_${YEAR}.log"
+# Database Info
+USER="sys"
+PASS="oracle"
+DATABASES=("fcclive" "fccstandby" "fccreport")
+
+PREFIX_PREEOD="PREEOD_R1"
+PREFIX_POSTEOD="POSTEOD_R2"
+POSTEOD_FCCLIVE="${PREFIX_POSTEOD}_${DATABASES[0]}"
+POSTEOD_FCCREPORT="${PREFIX_POSTEOD}_${DATABASES[1]}"

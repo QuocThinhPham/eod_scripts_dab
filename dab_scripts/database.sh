@@ -254,22 +254,22 @@ function f_db_activate_stby_to_primary() {
 
    f_u_show_log "$LOG_PATH" "Database is Physical Standby and running in MOUNT mode."
 
-   rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
+   rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "$POSTEOD_FCCREPORT")
    if [ "$rp_is_existed" == "$EXISTED" ]; then
-      msg_rp_drop=$(f_rp_drop_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
+      msg_rp_drop=$(f_rp_drop_restore_point $user $pass $service $POSTEOD_FCCREPORT)
    fi
-   msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
+   msg_rp_create=$(f_rp_create_restore_point $user $pass $service $POSTEOD_FCCREPORT)
    msg_check_rp_again="$NOT_EXISTED"
    while [ "$msg_check_rp_again" == "$NOT_EXISTED" ]
    do
       if [ "$msg_check_rp_again" == "$EXISTED" ]; then
          break
       fi
-      msg_rp_create=$(f_rp_create_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
-      msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
+      msg_rp_create=$(f_rp_create_restore_point $user $pass $service $POSTEOD_FCCREPORT)
+      msg_check_rp_again=$(f_rp_restore_point_is_existed $user $pass $service $POSTEOD_FCCREPORT)
    done
 
-   f_u_show_log "$LOG_PATH" "Create restore point POSTEOD_R2_FCCREPORT.\nCan ACTIVATE Physical Standby."
+   f_u_show_log "$LOG_PATH" "Create restore point$POSTEOD_FCCREPORT\nCan ACTIVATE Physical Standby."
 
    msg_activate=$(f_db_activate $user $pass $service)
    if [ "$msg_activate" == "$FAILED" ]; then
@@ -307,12 +307,12 @@ function f_db_revert_to_stby() {
 
    # Print message into log file
    f_u_show_log "$LOG_PATH" "Can REVERT to Physical Standby."
-   rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service "POSTEOD_R2_FCCREPORT")
+   rp_is_existed=$(f_rp_restore_point_is_existed $user $pass $service $POSTEOD_FCCREPORT)
    if [ "$rp_is_existed" == "$NOT_EXISTED" ]; then
       echo "Try again."
       exit 0
    else
-      msg_flashback=$(f_rp_flashback_to_restore_point $user $pass $service "POSTEOD_R2_FCCREPORT")
+      msg_flashback=$(f_rp_flashback_to_restore_point $user $pass $service $POSTEOD_FCCREPORT)
       if [ "$msg_flashback" == "$FAILED" ]; then
          echo "Try again."
          exit 0
@@ -338,28 +338,9 @@ function f_db_revert_to_stby() {
 
       f_u_show_log "$LOG_PATH" "Database STARTUP MOUNT FORCE."
 
-      scn_compared=$(f_db_compare_scn $user $pass $service "POSTEOD_R2_FCCREPORT")
+      scn_compared=$(f_db_compare_scn $user $pass $service $POSTEOD_FCCREPORT)
       if [ "$scn_compared" == "$EQUAL" ]; then
          f_u_show_log "$LOG_PATH" "Convert to Physical Standby: SUCCESS\nBegin Sync From Primary ..."
       fi
-   fi
-}
-
-# f_db_failed_eod $USER $PASS $PRIM_SERVICE $STBY_SERVICE
-function f_db_failed_eod() {
-   local user="$1"
-   local pass="$2"
-   local prim_service="$3"
-   local stby_service="$4"
-   local report_service="$5"
-   rp_prim=$(f_rp_restore_point_is_existed $user $pass $prim_service "PREEOD_R1_FCCLIVE")
-   rp_stby=$(f_rp_restore_point_is_existed $user $pass $prim_service "PREEOD_R1_FCCSTANDBY")
-   rp_report=$(f_rp_restore_point_is_existed $user $pass $report_service "PREEOD_R1_FCCREPORT")
-
-   # if [ "$rp_prim" == "$EXISTED" ] && [ "$rp_stby" == "$EXISTED" ] && [ "$rp_report" == "$EXISTED" ]; then
-   if [ "$rp_prim" == "$EXISTED" ] && [ "$rp_report" == "$EXISTED" ]; then
-      f_rp_flashback_to_restore_point $user $pass $prim_service "PREEOD_R1_FCCLIVE"
-      # f_rp_flashback_to_restore_point $user $pass $prim_service "PREEOD_R1_FCCSTANDBY"
-      f_rp_flashback_to_restore_point $user $pass $report_service "PREEOD_R1_FCCREPORT"
    fi
 }
